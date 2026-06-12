@@ -2,11 +2,15 @@
 package cli
 
 import (
+	"bufio"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/bpineau/pct/internal/expr"
 )
 
 // defaultPrecision is the number of decimal places shown when --precision
@@ -27,10 +31,11 @@ type options struct {
 }
 
 // Run executes pct with the given arguments (excluding the program name),
-// writing the result to stdout and diagnostics to stderr. It returns the
-// process exit code: 0 on success, 1 when a command fails, 2 on usage
-// errors.
-func Run(args []string, stdout, stderr io.Writer) int {
+// writing the result to stdout and diagnostics to stderr. Without a command
+// it evaluates expressions from stdin instead, interactively when stdin is
+// a terminal. It returns the process exit code: 0 on success, 1 when a
+// command or an input line fails, 2 on usage errors.
+func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	opts, rest, err := splitArgs(args)
 	if err != nil {
 		fmt.Fprintf(stderr, "pct: %v\n", err)
@@ -41,8 +46,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		return exitOK
 	}
 	if len(rest) == 0 {
-		printUsage(stderr)
-		return exitUsage
+		return session(stdin, stdout, stderr, opts.precision, isTerminal(stdin))
 	}
 
 	cmd := lookup(rest[0])
@@ -63,6 +67,61 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 	fmt.Fprintln(stdout, formatNumber(result, opts.precision))
 	return exitOK
+}
+
+// session evaluates expressions read from in, one per line, printing each
+// result to out. The previous result is available to the next line as
+// "ans". Interactively it greets and prompts on errw, ends at "quit",
+// "exit" or end of input, and a bad line never ends it; on piped input a
+// bad line is reported, the remaining lines still run, and the exit code
+// records the failure.
+func session(in io.Reader, out, errw io.Writer, precision int, interactive bool) int {
+	if interactive {
+		fmt.Fprintln(errw, `pct — type an expression; "ans" is the previous result, "quit" leaves`)
+	}
+	vars := make(map[string]float64)
+	code := exitOK
+	scanner := bufio.NewScanner(in)
+	for {
+		if interactive {
+			fmt.Fprint(errw, "> ")
+		}
+		if !scanner.Scan() {
+			break
+		}
+		line := strings.TrimSpace(scanner.Text())
+		switch {
+		case line == "":
+			continue
+		case interactive && (line == "quit" || line == "exit"):
+			return exitOK
+		}
+		result, err := expr.EvaluateWith(line, vars)
+		if err != nil {
+			fmt.Fprintf(errw, "pct: %v\n", err)
+			if !interactive {
+				code = exitError
+			}
+			continue
+		}
+		vars["ans"] = result
+		fmt.Fprintln(out, formatNumber(result, precision))
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintf(errw, "pct: %v\n", err)
+		return exitError
+	}
+	return code
+}
+
+// isTerminal reports whether r reads from an interactive terminal.
+func isTerminal(r io.Reader) bool {
+	f, ok := r.(*os.File)
+	if !ok {
+		return false
+	}
+	info, err := f.Stat()
+	return err == nil && info.Mode()&os.ModeCharDevice != 0
 }
 
 // splitArgs separates global options from positional arguments. Only exact
@@ -125,6 +184,7 @@ func printUsage(w io.Writer) {
 Usage:
 
   pct [options] <command> <arguments>
+  pct [options]                          evaluate expressions from standard input
 
 Commands:
 

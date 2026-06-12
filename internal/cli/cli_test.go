@@ -7,6 +7,14 @@ import (
 	"testing"
 )
 
+// run invokes Run with empty standard input and returns the exit code and
+// both output streams.
+func run(args []string) (code int, stdout, stderr string) {
+	var out, errw bytes.Buffer
+	code = Run(args, strings.NewReader(""), &out, &errw)
+	return code, out.String(), errw.String()
+}
+
 func TestRun(t *testing.T) {
 	tests := []struct {
 		name string
@@ -29,6 +37,11 @@ func TestRun(t *testing.T) {
 		{"whatof", []string{"whatof", "10", "200"}, "5\n"},
 		{"comp", []string{"comp", "7", "1000", "5"}, "1402.55\n"},
 
+		// Functions and constants.
+		{"ev sqrt", []string{"ev", "sqrt(2)"}, "1.41\n"},
+		{"ev constants", []string{"ev", "2 * pi"}, "6.28\n"},
+		{"ev rounding helpers", []string{"ev", "ceil(min(2.3, 4))"}, "3\n"},
+
 		// Aliases.
 		{"eval alias of ev", []string{"eval", "20", "+10%"}, "22\n"},
 		{"compound alias of comp", []string{"compound", "7", "1000", "5"}, "1402.55\n"},
@@ -44,15 +57,92 @@ func TestRun(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var stdout, stderr bytes.Buffer
-			code := Run(tt.args, &stdout, &stderr)
+			code, stdout, stderr := run(tt.args)
 			if code != 0 {
-				t.Fatalf("Run(%q) = %d, want 0; stderr: %s", tt.args, code, stderr.String())
+				t.Fatalf("Run(%q) = %d, want 0; stderr: %s", tt.args, code, stderr)
 			}
-			if got := stdout.String(); got != tt.want {
-				t.Errorf("Run(%q) printed %q, want %q", tt.args, got, tt.want)
+			if stdout != tt.want {
+				t.Errorf("Run(%q) printed %q, want %q", tt.args, stdout, tt.want)
 			}
 		})
+	}
+}
+
+func TestRunStdin(t *testing.T) {
+	tests := []struct {
+		name       string
+		args       []string
+		input      string
+		wantOut    string
+		wantCode   int
+		wantStderr string // substring of stderr, "" for none
+	}{
+		{
+			name:    "one expression per line",
+			input:   "20 + 10%\n1000 - 20% - 20%\n",
+			wantOut: "22\n640\n",
+		},
+		{
+			name:    "ans names the previous result",
+			input:   "100 + 100\nans - 50%\nans + 10\n",
+			wantOut: "200\n100\n110\n",
+		},
+		{
+			name:    "blank lines are skipped",
+			input:   "\n  \n1 + 1\n\n",
+			wantOut: "2\n",
+		},
+		{
+			name:       "an error does not end the session",
+			input:      "20 +\n1 + 1\n",
+			wantOut:    "2\n",
+			wantCode:   1,
+			wantStderr: "unexpected end of expression",
+		},
+		{
+			name:    "precision option applies",
+			args:    []string{"--precision", "4"},
+			input:   "sqrt(2)\n",
+			wantOut: "1.4142\n",
+		},
+		{
+			name:    "empty input",
+			input:   "",
+			wantOut: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := Run(tt.args, strings.NewReader(tt.input), &stdout, &stderr)
+			if code != tt.wantCode {
+				t.Fatalf("Run(%q) = %d, want %d; stderr: %s", tt.args, code, tt.wantCode, stderr.String())
+			}
+			if got := stdout.String(); got != tt.wantOut {
+				t.Errorf("Run(%q) printed %q, want %q", tt.args, got, tt.wantOut)
+			}
+			if got := stderr.String(); !strings.Contains(got, tt.wantStderr) {
+				t.Errorf("Run(%q) stderr = %q, want it to contain %q", tt.args, got, tt.wantStderr)
+			}
+		})
+	}
+}
+
+func TestInteractiveSession(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	in := strings.NewReader("1 + 1\nnonsense\nquit\n3 + 3\n")
+	code := session(in, &stdout, &stderr, 2, true)
+	if code != 0 {
+		t.Fatalf("session() = %d, want 0 (interactive errors are not fatal)", code)
+	}
+	if got, want := stdout.String(), "2\n"; got != want {
+		t.Errorf("session() printed %q, want %q (quit must end the session)", got, want)
+	}
+	errOut := stderr.String()
+	for _, want := range []string{"> ", `unknown name "nonsense"`} {
+		if !strings.Contains(errOut, want) {
+			t.Errorf("session() stderr = %q, want it to contain %q", errOut, want)
+		}
 	}
 }
 
@@ -63,8 +153,6 @@ func TestRunErrors(t *testing.T) {
 		wantCode   int
 		wantStderr string // substring of stderr
 	}{
-		{"no arguments", nil, 2, "Usage:"},
-		{"no arguments shows examples", nil, 2, "Examples:"},
 		{"unknown command", []string{"frobnicate", "1"}, 2, `unknown command "frobnicate"`},
 		{"missing arguments", []string{"add", "2"}, 2, "usage: pct add <percent> <number>"},
 		{"extra arguments", []string{"to", "1", "2", "3"}, 2, "usage: pct to <from> <to>"},
@@ -82,13 +170,12 @@ func TestRunErrors(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var stdout, stderr bytes.Buffer
-			code := Run(tt.args, &stdout, &stderr)
+			code, _, stderr := run(tt.args)
 			if code != tt.wantCode {
-				t.Fatalf("Run(%q) = %d, want %d; stderr: %s", tt.args, code, tt.wantCode, stderr.String())
+				t.Fatalf("Run(%q) = %d, want %d; stderr: %s", tt.args, code, tt.wantCode, stderr)
 			}
-			if got := stderr.String(); !strings.Contains(got, tt.wantStderr) {
-				t.Errorf("Run(%q) stderr = %q, want it to contain %q", tt.args, got, tt.wantStderr)
+			if !strings.Contains(stderr, tt.wantStderr) {
+				t.Errorf("Run(%q) stderr = %q, want it to contain %q", tt.args, stderr, tt.wantStderr)
 			}
 		})
 	}
@@ -97,13 +184,14 @@ func TestRunErrors(t *testing.T) {
 func TestRunHelp(t *testing.T) {
 	for _, args := range [][]string{{"-h"}, {"--help"}, {"help"}} {
 		t.Run(args[0], func(t *testing.T) {
-			var stdout, stderr bytes.Buffer
-			if code := Run(args, &stdout, &stderr); code != 0 {
-				t.Fatalf("Run(%q) = %d, want 0; stderr: %s", args, code, stderr.String())
+			code, out, stderr := run(args)
+			if code != 0 {
+				t.Fatalf("Run(%q) = %d, want 0; stderr: %s", args, code, stderr)
 			}
-			out := stdout.String()
 			for _, want := range []string{
 				"Usage:", "add", "eval", "to", "whatof", "compound", "--precision",
+				"standard input",
+				"sqrt",
 				"Examples:",
 				`pct ev "20 + 10%"`,
 				"# 22",
@@ -170,6 +258,7 @@ func TestFormatNumber(t *testing.T) {
 		{626.1458, 2, "626.15"},
 		{1402.5517307, 4, "1402.5517"},
 		{1402.5517307, 0, "1403"},
+		{24.4, 0, "24"}, // precision 0 rounds and prints no decimal point
 		{-20, 2, "-20"},
 		{-0.0001, 2, "0"}, // rounds to zero, not "-0"
 		{0, 2, "0"},
