@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-// close reports whether got is within a small relative tolerance of want,
+// near reports whether got is within a small relative tolerance of want,
 // absorbing ordinary floating-point noise.
-func close(got, want float64) bool {
+func near(got, want float64) bool {
 	return math.Abs(got-want) <= 1e-9*max(1, math.Abs(want))
 }
 
@@ -26,7 +26,7 @@ func TestAdd(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Add(tt.p, tt.n); !close(got, tt.want) {
+			if got := Add(tt.p, tt.n); !near(got, tt.want) {
 				t.Errorf("Add(%v, %v) = %v, want %v", tt.p, tt.n, got, tt.want)
 			}
 		})
@@ -50,7 +50,7 @@ func TestChange(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Change(%v, %v) returned error: %v", tt.from, tt.to, err)
 			}
-			if !close(got, tt.want) {
+			if !near(got, tt.want) {
 				t.Errorf("Change(%v, %v) = %v, want %v", tt.from, tt.to, got, tt.want)
 			}
 		})
@@ -80,7 +80,7 @@ func TestShare(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Share(%v, %v) returned error: %v", tt.part, tt.whole, err)
 			}
-			if !close(got, tt.want) {
+			if !near(got, tt.want) {
 				t.Errorf("Share(%v, %v) = %v, want %v", tt.part, tt.whole, got, tt.want)
 			}
 		})
@@ -107,7 +107,7 @@ func TestCompound(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Compound(tt.p, tt.n, tt.periods); !close(got, tt.want) {
+			if got := Compound(tt.p, tt.n, tt.periods); !near(got, tt.want) {
 				t.Errorf("Compound(%v, %v, %v) = %v, want %v", tt.p, tt.n, tt.periods, got, tt.want)
 			}
 		})

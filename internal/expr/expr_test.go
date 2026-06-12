@@ -29,10 +29,10 @@ func TestEvaluate(t *testing.T) {
 		{"20 +10%", 22},
 		{"80 - 25%", 60},
 		{"100 + -10%", 90},
-		{"100 - 20 + 5%", 81},      // 5% of 20, the preceding operand
-		{"100 + 10 + 50%", 115},    // 50% of 10, not of 110
-		{"1000 - 20% - 20%", 640},  // successive percentages compound
-		{"20 + 10% + 10%", 24.2},   // 22, then 10% of 22
+		{"100 - 20 + 5%", 81},        // 5% of 20, the preceding operand
+		{"100 + 10 + 50%", 115},      // 50% of 10, not of 110
+		{"1000 - 20% - 20%", 640},    // successive percentages compound
+		{"20 + 10% + 10%", 24.2},     // 22, then 10% of 22
 		{"(10 + 50%) * 2 + 10%", 33}, // 30, then 10% of 30
 
 		// Percentages multiplied, divided, parenthesized or standing
@@ -128,7 +128,7 @@ func FuzzEvaluate(f *testing.F) {
 	} {
 		f.Add(seed)
 	}
-	f.Fuzz(func(t *testing.T, input string) {
+	f.Fuzz(func(_ *testing.T, input string) {
 		// Evaluate must never panic, whatever the input.
 		_, _ = Evaluate(input)
 	})

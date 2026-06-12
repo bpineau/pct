@@ -1,0 +1,22 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - gocritic
+    - misspell
+    - revive
+    - unconvert
+  settings:
+    errcheck:
+      # Output to the user-supplied stdout and stderr is best effort, as it
+      # is in most CLIs; there is nowhere meaningful to report the failure.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - (*text/tabwriter.Writer).Flush
+
+formatters:
+  enable:
+    - gofmt
