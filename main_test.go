@@ -22,7 +22,9 @@ func TestMainWiring(t *testing.T) {
 
 	main()
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
 	out, err := io.ReadAll(r)
 	if err != nil {
 		t.Fatal(err)

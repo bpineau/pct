@@ -247,9 +247,11 @@ func TestIsTerminal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
 	if isTerminal(f) {
 		t.Error("isTerminal(regular file) = true, want false")
+	}
+	if err := f.Close(); err != nil {
+		t.Error(err)
 	}
 }
 
