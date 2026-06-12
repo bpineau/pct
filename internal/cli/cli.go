@@ -89,7 +89,8 @@ func session(in io.Reader, out, errw io.Writer, precision int, interactive bool)
 		if !scanner.Scan() {
 			break
 		}
-		line := strings.TrimSpace(scanner.Text())
+		line, _, _ := strings.Cut(scanner.Text(), "#") // "#" starts a comment
+		line = strings.TrimSpace(line)
 		switch {
 		case line == "":
 			continue

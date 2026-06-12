@@ -33,6 +33,69 @@ func TestAdd(t *testing.T) {
 	}
 }
 
+func TestOf(t *testing.T) {
+	tests := []struct {
+		name string
+		p, n float64
+		want float64
+	}{
+		{"plain share", 20, 2000, 400},
+		{"half", 50, 10, 5},
+		{"zero percent", 0, 123.45, 0},
+		{"negative percent", -10, 200, -20},
+		{"fractional", 8.1, 5, 0.405},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Of(tt.p, tt.n); !near(got, tt.want) {
+				t.Errorf("Of(%v, %v) = %v, want %v", tt.p, tt.n, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBase(t *testing.T) {
+	tests := []struct {
+		name string
+		p, n float64
+		want float64
+	}{
+		{"undo an increase", 20, 120, 100},
+		{"undo a decrease", -20, 80, 100},
+		{"zero percent", 0, 42, 42},
+		{"undo a doubling", 100, 200, 100},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Base(tt.p, tt.n)
+			if err != nil {
+				t.Fatalf("Base(%v, %v) returned error: %v", tt.p, tt.n, err)
+			}
+			if !near(got, tt.want) {
+				t.Errorf("Base(%v, %v) = %v, want %v", tt.p, tt.n, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestBaseRoundTripsAdd(t *testing.T) {
+	for _, p := range []float64{-50, -7, 0, 8.1, 100} {
+		got, err := Base(p, Add(p, 250))
+		if err != nil {
+			t.Fatalf("Base(%v, Add(%v, 250)) returned error: %v", p, p, err)
+		}
+		if !near(got, 250) {
+			t.Errorf("Base(%v, Add(%v, 250)) = %v, want 250", p, p, got)
+		}
+	}
+}
+
+func TestBaseTotalLoss(t *testing.T) {
+	if _, err := Base(-100, 50); !errors.Is(err, ErrTotalLoss) {
+		t.Errorf("Base(-100, 50) error = %v, want ErrTotalLoss", err)
+	}
+}
+
 func TestChange(t *testing.T) {
 	tests := []struct {
 		name     string

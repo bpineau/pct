@@ -60,6 +60,38 @@ var commands = []command{
 		},
 	},
 	{
+		name:    "of",
+		args:    "<percent> <number>",
+		summary: "take a percentage of a number",
+		arity:   2,
+		examples: []example{
+			{`of 20 2000`, "400 — 20% of 2000"},
+		},
+		run: func(args []string) (float64, error) {
+			ns, err := parseNumbers(args, "percentage", "number")
+			if err != nil {
+				return 0, err
+			}
+			return percent.Of(ns[0], ns[1]), nil
+		},
+	},
+	{
+		name:    "base",
+		args:    "<percent> <result>",
+		summary: "the number that, increased by the percentage, gives the result",
+		arity:   2,
+		examples: []example{
+			{`base 20 120`, "100 — undoes add: 100 plus 20% is 120 (e.g. price before tax)"},
+		},
+		run: func(args []string) (float64, error) {
+			ns, err := parseNumbers(args, "percentage", "result")
+			if err != nil {
+				return 0, err
+			}
+			return percent.Base(ns[0], ns[1])
+		},
+	},
+	{
 		name:    "eval",
 		alias:   "ev",
 		args:    "<expression>",

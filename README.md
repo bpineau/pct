@@ -80,6 +80,29 @@ $ pct add -2 100     # 100 decreased by 2%
 `add x y` is shorthand for `eval "y + x%"`, kept for compatibility with an
 older version of this tool.
 
+### `of` — take a percentage of a number
+
+```console
+$ pct of 20 2000     # 20% of 2000
+400
+```
+
+### `base` — the number a percentage was added to
+
+The inverse of `add`: given a result and the percentage it already
+includes, recover the starting number. This is the price-before-tax
+question, and the answer is *not* `result - p%`:
+
+```console
+$ pct base 20 120    # 100 plus 20% gives 120
+100
+$ pct add -20 120    # naively subtracting 20% lands elsewhere
+96
+```
+
+It undoes decreases too: `pct base -20 80` answers "80 is what, after a
+20% discount?" with 100.
+
 ### `to` — percentage change between two numbers
 
 How much percent must be added to the first number to reach the second:
@@ -119,7 +142,17 @@ $ printf '42 * 270.42 - 20%%\nans / 12\n' | pct
 `ans` names the previous result, at full precision rather than as
 displayed, so chained steps don't accumulate rounding error. A line that
 fails is reported on stderr, the remaining lines still run, and the exit
-code records the failure.
+code records the failure. A `#` starts a comment, so a file of annotated
+calculations pipes straight in:
+
+```console
+$ pct < quote.pct
+$ cat quote.pct
+# day rate, three days
+450 * 3
+ans - 10%        # returning-customer discount
+ans + 20%        # VAT
+```
 
 On a terminal the same mode is interactive: type an expression per line,
 reuse `ans`, and leave with `quit`, `exit` or Ctrl-D:

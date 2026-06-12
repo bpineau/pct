@@ -33,6 +33,9 @@ func TestRun(t *testing.T) {
 			[]string{"eval", "(42 *270.42 - 20%) / 12 -20% + 150 * 10% + 5 + 8.1%"},
 			"626.15\n",
 		},
+		{"of", []string{"of", "20", "2000"}, "400\n"},
+		{"base", []string{"base", "20", "120"}, "100\n"},
+		{"base undoes a decrease", []string{"base", "-20", "80"}, "100\n"},
 		{"to", []string{"to", "20", "20.8"}, "4\n"},
 		{"whatof", []string{"whatof", "10", "200"}, "5\n"},
 		{"comp", []string{"comp", "7", "1000", "5"}, "1402.55\n"},
@@ -110,6 +113,11 @@ func TestRunStdin(t *testing.T) {
 			input:   "",
 			wantOut: "",
 		},
+		{
+			name:    "comments are ignored",
+			input:   "# a full-line comment\n100 + 10% # a trailing comment\n   # indented comment\n",
+			wantOut: "110\n",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -165,6 +173,7 @@ func TestRunErrors(t *testing.T) {
 		{"bad expression", []string{"ev", "20 ++"}, 1, "unexpected end of expression"},
 		{"division by zero", []string{"ev", "1/0"}, 1, "division by zero"},
 		{"change from zero", []string{"to", "0", "5"}, 1, "reference value is zero"},
+		{"base of a total loss", []string{"base", "-100", "50"}, 1, "collapses every number to zero"},
 		{"share of zero", []string{"whatof", "5", "0"}, 1, "reference value is zero"},
 		{"fractional periods", []string{"comp", "7", "1000", "1.5"}, 1, `invalid number of periods "1.5"`},
 	}
@@ -190,6 +199,8 @@ func TestRunHelp(t *testing.T) {
 			}
 			for _, want := range []string{
 				"Usage:", "add", "eval", "to", "whatof", "compound", "--precision",
+				"of 20 2000",
+				"base 20 120",
 				"standard input",
 				"sqrt",
 				"Examples:",
