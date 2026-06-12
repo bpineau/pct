@@ -149,6 +149,16 @@ Commands:
 		fmt.Fprintf(tw, "  %s %s\t%s\n", name, cmd.args, cmd.summary)
 	}
 	tw.Flush()
+
+	fmt.Fprint(w, "\nExamples:\n\n")
+	tw = tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	for _, cmd := range commands {
+		for _, ex := range cmd.examples {
+			fmt.Fprintf(tw, "  pct %s\t# %s\n", ex.cmd, ex.note)
+		}
+	}
+	tw.Flush()
+
 	fmt.Fprintf(w, `
 Options:
 

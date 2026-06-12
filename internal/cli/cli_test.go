@@ -63,6 +63,7 @@ func TestRunErrors(t *testing.T) {
 		wantStderr string // substring of stderr
 	}{
 		{"no arguments", nil, 2, "Usage:"},
+		{"no arguments shows examples", nil, 2, "Examples:"},
 		{"unknown command", []string{"frobnicate", "1"}, 2, `unknown command "frobnicate"`},
 		{"missing arguments", []string{"add", "2"}, 2, "usage: pct add <percent> <number>"},
 		{"extra arguments", []string{"to", "1", "2", "3"}, 2, "usage: pct to <from> <to>"},
@@ -100,7 +101,14 @@ func TestRunHelp(t *testing.T) {
 				t.Fatalf("Run(%q) = %d, want 0; stderr: %s", args, code, stderr.String())
 			}
 			out := stdout.String()
-			for _, want := range []string{"Usage:", "add", "eval", "to", "whatof", "compound", "--precision"} {
+			for _, want := range []string{
+				"Usage:", "add", "eval", "to", "whatof", "compound", "--precision",
+				"Examples:",
+				`pct ev "20 + 10%"`,
+				"# 22",
+				"pct add -2 100",
+				"# 98",
+			} {
 				if !strings.Contains(out, want) {
 					t.Errorf("Run(%q) help output is missing %q", args, want)
 				}

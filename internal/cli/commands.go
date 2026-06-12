@@ -15,12 +15,20 @@ const variadic = -1
 // A command is one pct subcommand: a name, the shape of its arguments and
 // a function from those arguments to a number.
 type command struct {
-	name    string
-	alias   string // optional short or long form, "" if none
-	args    string // placeholder list shown in usage messages
-	summary string
-	arity   int // exact argument count, or variadic
-	run     func(args []string) (float64, error)
+	name     string
+	alias    string // optional short or long form, "" if none
+	args     string // placeholder list shown in usage messages
+	summary  string
+	arity    int // exact argument count, or variadic
+	examples []example
+	run      func(args []string) (float64, error)
+}
+
+// An example is one sample invocation shown by help, annotated with its
+// result and the feature it demonstrates.
+type example struct {
+	cmd  string // the command line, without the leading "pct"
+	note string // result and explanation, shown as a "#" comment
 }
 
 // accepts reports whether the command can be called with n arguments.
@@ -38,6 +46,10 @@ var commands = []command{
 		args:    "<percent> <number>",
 		summary: "add a percentage to a number",
 		arity:   2,
+		examples: []example{
+			{`add 2 100`, "102 — 100 raised by 2%"},
+			{`add -2 100`, "98 — a negative percentage subtracts"},
+		},
 		run: func(args []string) (float64, error) {
 			p, err := parseNumber("percentage", args[0])
 			if err != nil {
@@ -56,6 +68,11 @@ var commands = []command{
 		args:    "<expression>",
 		summary: "evaluate an expression with percentage terms",
 		arity:   variadic,
+		examples: []example{
+			{`ev "20 + 10%"`, "22 — a percentage added applies to what precedes it"},
+			{`ev "(10 + 5) * 5%"`, "0.75 — multiplied, a percentage is a plain fraction"},
+			{`ev "1000 - 20% - 20%"`, "640 — consecutive percentages compound"},
+		},
 		run: func(args []string) (float64, error) {
 			return expr.Evaluate(strings.Join(args, " "))
 		},
@@ -65,6 +82,9 @@ var commands = []command{
 		args:    "<from> <to>",
 		summary: "percentage to add to go from one number to the other",
 		arity:   2,
+		examples: []example{
+			{`to 20 20.8`, "4 — adding 4% takes 20 to 20.8"},
+		},
 		run: func(args []string) (float64, error) {
 			from, err := parseNumber("starting number", args[0])
 			if err != nil {
@@ -82,6 +102,9 @@ var commands = []command{
 		args:    "<part> <whole>",
 		summary: "percentage the first number is of the second",
 		arity:   2,
+		examples: []example{
+			{`whatof 10 200`, "5 — 10 is 5% of 200"},
+		},
 		run: func(args []string) (float64, error) {
 			part, err := parseNumber("part", args[0])
 			if err != nil {
@@ -100,6 +123,10 @@ var commands = []command{
 		args:    "<percent> <number> <periods>",
 		summary: "compound a percentage over a number of periods",
 		arity:   3,
+		examples: []example{
+			{`comp 7 1000 5`, "1402.55 — 7% per period over 5 periods"},
+			{`comp 7 1000 5 --precision 4`, "1402.5517 — more decimal places"},
+		},
 		run: func(args []string) (float64, error) {
 			p, err := parseNumber("percentage", args[0])
 			if err != nil {
