@@ -122,6 +122,25 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 		{"sqrt(1, 2)", "sqrt expects 1 argument, got 2"},
 		{"min()", "min expects at least 1 argument"},
 		{"ans + 1", `unknown name "ans"`}, // no binding outside a session
+
+		// Lexical errors at every position the parser advances past,
+		// pinning down error propagation from the scanner.
+		{"1 + $", "unexpected character '$'"},
+		{"1 * $", "unexpected character '$'"},
+		{"2 * %", `unexpected "%"`},
+		{"-$", "unexpected character '$'"},
+		{"-)", `unexpected ")"`},
+		{"2^$", "unexpected character '$'"},
+		{"2$", "unexpected character '$'"},
+		{"5%$", "unexpected character '$'"},
+		{"($", "unexpected character '$'"},
+		{"(*)", `unexpected "*"`},
+		{"(1)$", "unexpected character '$'"},
+		{"pi$", "unexpected character '$'"},
+		{"sqrt($", "unexpected character '$'"},
+		{"sqrt(*)", `unexpected "*"`},
+		{"min(1,$", "unexpected character '$'"},
+		{"sqrt(4)$", "unexpected character '$'"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
@@ -148,6 +167,17 @@ func TestEvaluateSyntaxErrorPosition(t *testing.T) {
 	}
 	if syntaxErr.Pos != 5 {
 		t.Errorf("SyntaxError.Pos = %d, want 5", syntaxErr.Pos)
+	}
+}
+
+func TestPlural(t *testing.T) {
+	// Every fixed-arity builtin currently takes one argument, so the
+	// plural branch is unreachable through Evaluate; pin it directly.
+	if got := plural(1); got != "" {
+		t.Errorf(`plural(1) = %q, want ""`, got)
+	}
+	if got := plural(2); got != "s" {
+		t.Errorf(`plural(2) = %q, want "s"`, got)
 	}
 }
 

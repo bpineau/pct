@@ -15,6 +15,10 @@ import (
 	"github.com/bpineau/pct/internal/cli"
 )
 
+// exit lets the test intercept main's exit code; os.Exit would end the
+// process before the coverage profile is written.
+var exit = os.Exit
+
 func main() {
-	os.Exit(cli.Run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
+	exit(cli.Run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 }

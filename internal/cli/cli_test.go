@@ -2,6 +2,8 @@ package cli
 
 import (
 	"bytes"
+	"errors"
+	"os"
 	"slices"
 	"strings"
 	"testing"
@@ -170,6 +172,11 @@ func TestRunErrors(t *testing.T) {
 		{"negative precision", []string{"--precision=-1", "add", "2", "100"}, 2, `invalid precision "-1"`},
 		{"unknown option", []string{"--frob", "add", "2", "100"}, 2, `unknown option "--frob"`},
 		{"bad number", []string{"add", "two", "100"}, 1, `invalid percentage "two"`},
+		{"of bad number", []string{"of", "x", "100"}, 1, `invalid percentage "x"`},
+		{"base bad number", []string{"base", "x", "100"}, 1, `invalid percentage "x"`},
+		{"to bad number", []string{"to", "x", "100"}, 1, `invalid starting number "x"`},
+		{"whatof bad number", []string{"whatof", "x", "100"}, 1, `invalid part "x"`},
+		{"comp bad number", []string{"comp", "x", "100", "2"}, 1, `invalid percentage "x"`},
 		{"bad expression", []string{"ev", "20 ++"}, 1, "unexpected end of expression"},
 		{"division by zero", []string{"ev", "1/0"}, 1, "division by zero"},
 		{"change from zero", []string{"to", "0", "5"}, 1, "reference value is zero"},
@@ -214,6 +221,35 @@ func TestRunHelp(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// failingReader always fails, standing in for an unreadable stdin.
+type failingReader struct{}
+
+func (failingReader) Read([]byte) (int, error) { return 0, errors.New("stdin unreadable") }
+
+func TestSessionReadError(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	if code := session(failingReader{}, &stdout, &stderr, 2, false); code != 1 {
+		t.Fatalf("session() = %d, want 1 on a read error", code)
+	}
+	if got := stderr.String(); !strings.Contains(got, "stdin unreadable") {
+		t.Errorf("session() stderr = %q, want the read error reported", got)
+	}
+}
+
+func TestIsTerminal(t *testing.T) {
+	if isTerminal(strings.NewReader("")) {
+		t.Error("isTerminal(strings.Reader) = true, want false")
+	}
+	f, err := os.CreateTemp(t.TempDir(), "pct")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if isTerminal(f) {
+		t.Error("isTerminal(regular file) = true, want false")
 	}
 }
 
