@@ -31,8 +31,8 @@ $ make install
 
 ### `eval` (alias `ev`) — evaluate an expression
 
-Evaluates ordinary infix arithmetic (`+`, `-`, `*`, `/`, parentheses) in
-which percentages are first-class terms:
+Evaluates ordinary infix arithmetic (`+`, `-`, `*`, `/`, `^`, parentheses)
+in which percentages are first-class terms:
 
 ```console
 $ pct ev "20 + 10%"          # 20 increased by 10%
@@ -45,6 +45,17 @@ $ pct ev "(10 + 50%) * 5%"   # 5% of (10 increased by 50%)
 
 Quoting the expression is optional as long as the shell leaves its pieces
 alone; `pct ev 20 +10%` works as well.
+
+Exponentiation follows the usual conventions: `^` binds tighter than the
+other operators (`2 * 5^2` is 50), associates to the right (`2^3^2` is
+2⁹ = 512), and a leading sign applies to the whole power (`-2^2` is −4):
+
+```console
+$ pct ev "5^3"
+125
+$ pct ev "9^(1/2)"      # fractional exponents work too
+3
+```
 
 ### `add` — add a percentage to a number
 
@@ -94,9 +105,9 @@ from its context:
   percentage applies to 10, giving 115. When percentages follow one
   another they compound on the running result: `1000 - 20% - 20%` is 640.
 
-- **Multiplied, divided, parenthesized or standing alone, it is simply a
-  fraction of one.** `150 * 10%` is 15, `10 / 50%` is 20, and `50%` alone
-  prints 0.5.
+- **Multiplied, divided, exponentiated, parenthesized or standing alone,
+  it is simply a fraction of one.** `150 * 10%` is 15, `10 / 50%` is 20,
+  `5^50%` is √5, and `50%` alone prints 0.5.
 
 A longer expression, decomposed:
 

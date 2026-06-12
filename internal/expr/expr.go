@@ -5,7 +5,13 @@
 //
 //	expression = term { ("+" | "-") term } .
 //	term       = factor { ("*" | "/") factor } .
-//	factor     = [ "+" | "-" ] ( number [ "%" ] | "(" expression ")" ) .
+//	factor     = ( "+" | "-" ) factor | primary [ "^" factor ] .
+//	primary    = number [ "%" ] | "(" expression ")" .
+//
+// Exponentiation follows the usual conventions: it binds tighter than the
+// other operators but looser than parentheses, associates to the right
+// ("2^3^2" is 2^(3^2) = 512), and a leading sign applies to the whole power
+// ("-2^2" is -(2^2) = -4).
 //
 // A percentage literal such as "20%" has no value of its own; it borrows one
 // from its context:
@@ -17,13 +23,15 @@
 //     percentage applies to 10 — or the running result when percentages
 //     follow one another, so "1000 - 20% - 20%" compounds to 640.
 //
-//   - Multiplied, divided, parenthesized or standing alone, it is simply
-//     its fraction of one: "150 * 10%" is 15 and "50%" is 0.5.
+//   - Multiplied, divided, exponentiated, parenthesized or standing alone,
+//     it is simply its fraction of one: "150 * 10%" is 15, "50%" is 0.5 and
+//     "5^50%" is the square root of five.
 package expr
 
 import (
 	"errors"
 	"fmt"
+	"math"
 )
 
 // ErrDivisionByZero is returned when an expression divides by zero.
@@ -161,12 +169,11 @@ func (p *parser) term() (value, error) {
 	return left, nil
 }
 
-// factor parses an optionally signed number, percentage or parenthesized
-// expression. Parentheses seal their content into a plain value, so
-// "100 + (10%)" adds a tenth, not ten percent of 100.
+// factor parses an optionally signed power. The sign binds looser than "^"
+// while the exponent is itself a factor, which yields the conventional
+// reading: "-2^2" is -(2^2) and "2^3^2" is 2^(3^2).
 func (p *parser) factor() (value, error) {
-	switch p.tok.kind {
-	case tokenPlus, tokenMinus:
+	if p.tok.kind == tokenPlus || p.tok.kind == tokenMinus {
 		negate := p.tok.kind == tokenMinus
 		if err := p.advance(); err != nil {
 			return value{}, err
@@ -179,7 +186,30 @@ func (p *parser) factor() (value, error) {
 			v.num = -v.num
 		}
 		return v, nil
+	}
 
+	v, err := p.primary()
+	if err != nil {
+		return value{}, err
+	}
+	if p.tok.kind == tokenCaret {
+		if err := p.advance(); err != nil {
+			return value{}, err
+		}
+		exponent, err := p.factor()
+		if err != nil {
+			return value{}, err
+		}
+		v = value{num: math.Pow(v.scalar(), exponent.scalar())}
+	}
+	return v, nil
+}
+
+// primary parses a number, percentage or parenthesized expression.
+// Parentheses seal their content into a plain value, so "100 + (10%)" adds
+// a tenth, not ten percent of 100.
+func (p *parser) primary() (value, error) {
+	switch p.tok.kind {
 	case tokenNumber:
 		v := value{num: p.tok.num}
 		if err := p.advance(); err != nil {

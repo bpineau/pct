@@ -17,6 +17,7 @@ const (
 	tokenMinus
 	tokenStar
 	tokenSlash
+	tokenCaret
 	tokenLeftParen
 	tokenRightParen
 )
@@ -63,6 +64,8 @@ func (s *scanner) next() (token, error) {
 		kind = tokenStar
 	case '/':
 		kind = tokenSlash
+	case '^':
+		kind = tokenCaret
 	case '(':
 		kind = tokenLeftParen
 	case ')':

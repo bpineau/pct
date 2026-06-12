@@ -19,6 +19,7 @@ func TestRun(t *testing.T) {
 		{"ev with split arguments", []string{"ev", "20", "+10%"}, "22\n"},
 		{"ev percentage of a sum", []string{"ev", "(10 + 5) * 5%"}, "0.75\n"},
 		{"ev nested percentages", []string{"ev", "(10 + 50%) * 5%"}, "0.75\n"},
+		{"ev power", []string{"ev", "5^3"}, "125\n"},
 		{
 			"eval long expression",
 			[]string{"eval", "(42 *270.42 - 20%) / 12 -20% + 150 * 10% + 5 + 8.1%"},

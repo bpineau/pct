@@ -29,6 +29,18 @@ func TestEvaluate(t *testing.T) {
 		{"1 - 2 - 3", -4},
 		{"12 / 3 / 2", 2},
 
+		// Exponentiation binds tighter than any other operator and
+		// associates to the right.
+		{"5^2", 25},
+		{"5^3", 125},
+		{"2^3^2", 512},  // 2^(3^2), not (2^3)^2
+		{"2 * 5^2", 50}, // tighter than "*"
+		{"-2^2", -4},    // tighter than unary minus
+		{"(-2)^2", 4},
+		{"2^-3", 0.125},
+		{"9^(1/2)", 3},
+		{"100 + 2^2", 104},
+
 		// Percentages added or subtracted are relative to the
 		// preceding operand.
 		{"20 + 10%", 22},
@@ -50,6 +62,8 @@ func TestEvaluate(t *testing.T) {
 		{"10 / 50%", 20},
 		{"(20%)", 0.2},
 		{"100 + (10%)", 100.1},
+		{"5^50%", 2.23606797749979}, // 5^0.5, the square root
+		{"50%^2", 0.25},
 
 		// Examples from the command specification.
 		{"(10 + 5) * 5%", 0.75},
@@ -76,6 +90,8 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 	}{
 		{"", "unexpected end of expression"},
 		{"1 +", "unexpected end of expression"},
+		{"5^", "unexpected end of expression"},
+		{"^2", `unexpected "^"`},
 		{"(1 + 2", `unexpected end of expression`},
 		{"1)", `unexpected ")"`},
 		{"1 2", `unexpected "2"`},
@@ -131,6 +147,7 @@ func FuzzEvaluate(f *testing.F) {
 		"1 / 0",
 		"((((1))))",
 		"-1--1",
+		"2^3^2",
 	} {
 		f.Add(seed)
 	}

@@ -69,6 +69,7 @@ var commands = []command{
 			{`ev "20 + 10%"`, "22 — a percentage added applies to what precedes it"},
 			{`ev "(10 + 5) * 5%"`, "0.75 — multiplied, a percentage is a plain fraction"},
 			{`ev "1000 - 20% - 20%"`, "640 — consecutive percentages compound"},
+			{`ev "5^3"`, "125 — ^ raises to a power"},
 		},
 		run: func(args []string) (float64, error) {
 			return expr.Evaluate(strings.Join(args, " "))
