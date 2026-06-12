@@ -6,7 +6,14 @@
 //	expression = term { ("+" | "-") term } .
 //	term       = factor { ("*" | "/") factor } .
 //	factor     = ( "+" | "-" ) factor | primary [ "^" factor ] .
-//	primary    = number [ "%" ] | "(" expression ")" .
+//	primary    = number [ "%" ] | name [ "(" arguments ")" ] |
+//	             "(" expression ")" .
+//	arguments  = expression { "," expression } .
+//
+// A bare name is a constant — pi and e are predefined — or a caller-supplied
+// binding (see EvaluateWith). A name followed by parentheses calls one of
+// the built-in functions: sqrt, abs, round, floor and ceil take one
+// argument; min and max take one or more.
 //
 // Exponentiation follows the usual conventions: it binds tighter than the
 // other operators but looser than parentheses, associates to the right
@@ -32,6 +39,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 )
 
 // ErrDivisionByZero is returned when an expression divides by zero.
@@ -51,7 +59,14 @@ func (e *SyntaxError) Error() string {
 // percentage terms. It returns a *SyntaxError for malformed input and
 // ErrDivisionByZero for divisions by zero.
 func Evaluate(input string) (float64, error) {
-	p := parser{scan: scanner{input: input}}
+	return EvaluateWith(input, nil)
+}
+
+// EvaluateWith is like Evaluate but makes the given named values available
+// to the expression, in addition to the built-in constants. Bindings shadow
+// constants of the same name.
+func EvaluateWith(input string, vars map[string]float64) (float64, error) {
+	p := parser{scan: scanner{input: input}, vars: vars}
 	if err := p.advance(); err != nil {
 		return 0, err
 	}
@@ -63,6 +78,30 @@ func Evaluate(input string) (float64, error) {
 		return 0, p.unexpected()
 	}
 	return v.scalar(), nil
+}
+
+// constants are the predefined bare names.
+var constants = map[string]float64{
+	"pi": math.Pi,
+	"e":  math.E,
+}
+
+// variadic marks a function that takes any positive number of arguments.
+const variadic = -1
+
+// functions are the built-in functions, keyed by name. arity is the exact
+// argument count, or variadic.
+var functions = map[string]struct {
+	arity int
+	apply func([]float64) float64
+}{
+	"sqrt":  {1, func(args []float64) float64 { return math.Sqrt(args[0]) }},
+	"abs":   {1, func(args []float64) float64 { return math.Abs(args[0]) }},
+	"round": {1, func(args []float64) float64 { return math.Round(args[0]) }},
+	"floor": {1, func(args []float64) float64 { return math.Floor(args[0]) }},
+	"ceil":  {1, func(args []float64) float64 { return math.Ceil(args[0]) }},
+	"min":   {variadic, slices.Min[[]float64]},
+	"max":   {variadic, slices.Max[[]float64]},
 }
 
 // A value is the result of a parsed subexpression. A percentage literal
@@ -88,6 +127,7 @@ func (v value) scalar() float64 {
 type parser struct {
 	scan scanner
 	tok  token
+	vars map[string]float64 // caller-supplied bindings, may be nil
 }
 
 // advance moves the lookahead to the next token.
@@ -223,6 +263,9 @@ func (p *parser) primary() (value, error) {
 		}
 		return v, nil
 
+	case tokenName:
+		return p.name()
+
 	case tokenLeftParen:
 		if err := p.advance(); err != nil {
 			return value{}, err
@@ -242,6 +285,71 @@ func (p *parser) primary() (value, error) {
 	default:
 		return value{}, p.unexpected()
 	}
+}
+
+// name evaluates a binding, a constant or a function call.
+func (p *parser) name() (value, error) {
+	name, pos := p.tok.text, p.tok.pos
+	if err := p.advance(); err != nil {
+		return value{}, err
+	}
+
+	if n, ok := p.vars[name]; ok {
+		return value{num: n}, nil
+	}
+	if n, ok := constants[name]; ok {
+		return value{num: n}, nil
+	}
+	fn, ok := functions[name]
+	if !ok {
+		return value{}, &SyntaxError{Pos: pos, Msg: fmt.Sprintf("unknown name %q", name)}
+	}
+
+	if p.tok.kind != tokenLeftParen {
+		return value{}, &SyntaxError{Pos: p.tok.pos, Msg: fmt.Sprintf("expected %q after %q", "(", name)}
+	}
+	if err := p.advance(); err != nil {
+		return value{}, err
+	}
+	var args []float64
+	for p.tok.kind != tokenRightParen {
+		arg, err := p.expression()
+		if err != nil {
+			return value{}, err
+		}
+		args = append(args, arg.scalar())
+		if p.tok.kind != tokenComma {
+			break
+		}
+		if err := p.advance(); err != nil {
+			return value{}, err
+		}
+	}
+	if p.tok.kind != tokenRightParen {
+		return value{}, p.unexpected()
+	}
+	if err := p.advance(); err != nil {
+		return value{}, err
+	}
+
+	switch {
+	case fn.arity == variadic && len(args) == 0:
+		return value{}, &SyntaxError{Pos: pos, Msg: fmt.Sprintf("%s expects at least 1 argument", name)}
+	case fn.arity != variadic && len(args) != fn.arity:
+		return value{}, &SyntaxError{
+			Pos: pos,
+			Msg: fmt.Sprintf("%s expects %d argument%s, got %d", name, fn.arity, plural(fn.arity), len(args)),
+		}
+	}
+	return value{num: fn.apply(args)}, nil
+}
+
+// plural returns the "s" of a count's plural form.
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }
 
 // unexpected reports the lookahead token as out of place.

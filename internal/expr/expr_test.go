@@ -65,6 +65,22 @@ func TestEvaluate(t *testing.T) {
 		{"5^50%", 2.23606797749979}, // 5^0.5, the square root
 		{"50%^2", 0.25},
 
+		// Functions and constants.
+		{"sqrt(4)", 2},
+		{"sqrt(2)^2", 2},
+		{"sqrt(100 - 19%)", 9}, // percentages work inside arguments
+		{"abs(-3)", 3},
+		{"round(2.5)", 3},
+		{"round(-2.5)", -3}, // halves round away from zero
+		{"floor(2.9)", 2},
+		{"ceil(2.1)", 3},
+		{"min(3, 1, 2)", 1},
+		{"max(3, 1, 2)", 3},
+		{"min(10, 20) + 50%", 15}, // a call is an operand like any other
+		{"pi", math.Pi},
+		{"2 * pi", 2 * math.Pi},
+		{"e", math.E},
+
 		// Examples from the command specification.
 		{"(10 + 5) * 5%", 0.75},
 		{"(10 + 50%) * 5%", 0.75},
@@ -100,6 +116,12 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 		{"(1 + 2)%", `unexpected "%"`},
 		{"1..2", `invalid number "1..2"`},
 		{"2 # 3", "unexpected character '#'"},
+		{"frob(1)", `unknown name "frob"`},
+		{"sqrt 4", `expected "(" after "sqrt"`},
+		{"sqrt(4", "unexpected end of expression"},
+		{"sqrt(1, 2)", "sqrt expects 1 argument, got 2"},
+		{"min()", "min expects at least 1 argument"},
+		{"ans + 1", `unknown name "ans"`}, // no binding outside a session
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
@@ -129,6 +151,17 @@ func TestEvaluateSyntaxErrorPosition(t *testing.T) {
 	}
 }
 
+func TestEvaluateWith(t *testing.T) {
+	vars := map[string]float64{"ans": 50}
+	got, err := EvaluateWith("ans + 10%", vars)
+	if err != nil {
+		t.Fatalf("EvaluateWith returned error: %v", err)
+	}
+	if !near(got, 55) {
+		t.Errorf("EvaluateWith(\"ans + 10%%\", ans=50) = %v, want 55", got)
+	}
+}
+
 func TestEvaluateDivisionByZero(t *testing.T) {
 	for _, input := range []string{"1 / 0", "1 / (3 - 3)", "5 / 0%"} {
 		t.Run(input, func(t *testing.T) {
@@ -148,6 +181,7 @@ func FuzzEvaluate(f *testing.F) {
 		"((((1))))",
 		"-1--1",
 		"2^3^2",
+		"min(sqrt(4), pi, ceil(0.2))",
 	} {
 		f.Add(seed)
 	}

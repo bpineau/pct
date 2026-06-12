@@ -12,12 +12,14 @@ type tokenKind int
 const (
 	tokenEOF tokenKind = iota
 	tokenNumber
+	tokenName
 	tokenPercent
 	tokenPlus
 	tokenMinus
 	tokenStar
 	tokenSlash
 	tokenCaret
+	tokenComma
 	tokenLeftParen
 	tokenRightParen
 )
@@ -51,6 +53,9 @@ func (s *scanner) next() (token, error) {
 	if isDigit(c) || c == '.' {
 		return s.scanNumber()
 	}
+	if isLetter(c) {
+		return s.scanName(), nil
+	}
 
 	var kind tokenKind
 	switch c {
@@ -66,6 +71,8 @@ func (s *scanner) next() (token, error) {
 		kind = tokenSlash
 	case '^':
 		kind = tokenCaret
+	case ',':
+		kind = tokenComma
 	case '(':
 		kind = tokenLeftParen
 	case ')':
@@ -92,6 +99,17 @@ func (s *scanner) scanNumber() (token, error) {
 	return token{kind: tokenNumber, text: text, num: n, pos: start}, nil
 }
 
+// scanName consumes a run of letters: a function or constant name.
+func (s *scanner) scanName() token {
+	start := s.pos
+	for s.pos < len(s.input) && isLetter(s.input[s.pos]) {
+		s.pos++
+	}
+	return token{kind: tokenName, text: s.input[start:s.pos], pos: start}
+}
+
 func isSpace(c byte) bool { return c == ' ' || c == '\t' || c == '\n' || c == '\r' }
 
 func isDigit(c byte) bool { return '0' <= c && c <= '9' }
+
+func isLetter(c byte) bool { return 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' }
