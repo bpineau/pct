@@ -72,7 +72,7 @@ func (s *scanner) next() (token, error) {
 		return token{}, &SyntaxError{Pos: start, Msg: fmt.Sprintf("unexpected character %q", r)}
 	}
 	s.pos++
-	return token{kind: kind, text: string(c), pos: start}, nil
+	return token{kind: kind, text: s.input[start:s.pos], pos: start}, nil
 }
 
 // scanNumber consumes a run of digits and dots and parses it as a float.

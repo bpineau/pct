@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -51,15 +52,11 @@ var commands = []command{
 			{`add -2 100`, "98 — a negative percentage subtracts"},
 		},
 		run: func(args []string) (float64, error) {
-			p, err := parseNumber("percentage", args[0])
+			ns, err := parseNumbers(args, "percentage", "number")
 			if err != nil {
 				return 0, err
 			}
-			n, err := parseNumber("number", args[1])
-			if err != nil {
-				return 0, err
-			}
-			return percent.Add(p, n), nil
+			return percent.Add(ns[0], ns[1]), nil
 		},
 	},
 	{
@@ -86,15 +83,11 @@ var commands = []command{
 			{`to 20 20.8`, "4 — adding 4% takes 20 to 20.8"},
 		},
 		run: func(args []string) (float64, error) {
-			from, err := parseNumber("starting number", args[0])
+			ns, err := parseNumbers(args, "starting number", "target number")
 			if err != nil {
 				return 0, err
 			}
-			to, err := parseNumber("target number", args[1])
-			if err != nil {
-				return 0, err
-			}
-			return percent.Change(from, to)
+			return percent.Change(ns[0], ns[1])
 		},
 	},
 	{
@@ -106,15 +99,11 @@ var commands = []command{
 			{`whatof 10 200`, "5 — 10 is 5% of 200"},
 		},
 		run: func(args []string) (float64, error) {
-			part, err := parseNumber("part", args[0])
+			ns, err := parseNumbers(args, "part", "whole")
 			if err != nil {
 				return 0, err
 			}
-			whole, err := parseNumber("whole", args[1])
-			if err != nil {
-				return 0, err
-			}
-			return percent.Share(part, whole)
+			return percent.Share(ns[0], ns[1])
 		},
 	},
 	{
@@ -128,31 +117,28 @@ var commands = []command{
 			{`comp 7 1000 5 --precision 4`, "1402.5517 — more decimal places"},
 		},
 		run: func(args []string) (float64, error) {
-			p, err := parseNumber("percentage", args[0])
+			ns, err := parseNumbers(args[:2], "percentage", "number")
 			if err != nil {
 				return 0, err
 			}
-			n, err := parseNumber("number", args[1])
+			periods, err := parseNonNegativeInt("number of periods", args[2])
 			if err != nil {
 				return 0, err
 			}
-			periods, err := strconv.Atoi(args[2])
-			if err != nil || periods < 0 {
-				return 0, fmt.Errorf("invalid number of periods %q: want a non-negative integer", args[2])
-			}
-			return percent.Compound(p, n, periods), nil
+			return percent.Compound(ns[0], ns[1], periods), nil
 		},
 	},
 }
 
 // lookup finds a command by name or alias.
 func lookup(name string) *command {
-	for i := range commands {
-		if commands[i].name == name || commands[i].alias == name {
-			return &commands[i]
-		}
+	i := slices.IndexFunc(commands, func(c command) bool {
+		return c.name == name || c.alias == name
+	})
+	if i < 0 {
+		return nil
 	}
-	return nil
+	return &commands[i]
 }
 
 // parseNumber parses a positional argument as a float, naming the argument
@@ -161,6 +147,29 @@ func parseNumber(role, s string) (float64, error) {
 	n, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return 0, fmt.Errorf("invalid %s %q", role, s)
+	}
+	return n, nil
+}
+
+// parseNumbers parses one positional argument per role.
+func parseNumbers(args []string, roles ...string) ([]float64, error) {
+	ns := make([]float64, len(args))
+	for i, s := range args {
+		n, err := parseNumber(roles[i], s)
+		if err != nil {
+			return nil, err
+		}
+		ns[i] = n
+	}
+	return ns, nil
+}
+
+// parseNonNegativeInt parses a count-like argument, naming the argument in
+// the error message.
+func parseNonNegativeInt(role, s string) (int, error) {
+	n, err := strconv.Atoi(s)
+	if err != nil || n < 0 {
+		return 0, fmt.Errorf("invalid %s %q: want a non-negative integer", role, s)
 	}
 	return n, nil
 }

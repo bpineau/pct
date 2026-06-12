@@ -7,6 +7,12 @@ import (
 	"testing"
 )
 
+// near reports whether got is within a small relative tolerance of want,
+// absorbing ordinary floating-point noise.
+func near(got, want float64) bool {
+	return math.Abs(got-want) <= 1e-9*max(1, math.Abs(want))
+}
+
 func TestEvaluate(t *testing.T) {
 	tests := []struct {
 		input string
@@ -56,7 +62,7 @@ func TestEvaluate(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Evaluate(%q) returned error: %v", tt.input, err)
 			}
-			if math.Abs(got-tt.want) > 1e-9*max(1, math.Abs(tt.want)) {
+			if !near(got, tt.want) {
 				t.Errorf("Evaluate(%q) = %v, want %v", tt.input, got, tt.want)
 			}
 		})

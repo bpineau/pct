@@ -80,18 +80,16 @@ func splitArgs(args []string) (options, []string, error) {
 			return opts, rest, nil
 		case arg == "-h" || arg == "--help":
 			opts.help = true
-		case arg == "--precision":
-			i++
-			if i == len(args) {
-				return opts, nil, fmt.Errorf("option --precision requires a value")
+		case arg == "--precision" || strings.HasPrefix(arg, "--precision="):
+			value, inline := strings.CutPrefix(arg, "--precision=")
+			if !inline {
+				i++
+				if i == len(args) {
+					return opts, nil, fmt.Errorf("option --precision requires a value")
+				}
+				value = args[i]
 			}
-			p, err := parsePrecision(args[i])
-			if err != nil {
-				return opts, nil, err
-			}
-			opts.precision = p
-		case strings.HasPrefix(arg, "--precision="):
-			p, err := parsePrecision(strings.TrimPrefix(arg, "--precision="))
+			p, err := parseNonNegativeInt("precision", value)
 			if err != nil {
 				return opts, nil, err
 			}
@@ -103,15 +101,6 @@ func splitArgs(args []string) (options, []string, error) {
 		}
 	}
 	return opts, rest, nil
-}
-
-// parsePrecision validates a --precision value.
-func parsePrecision(s string) (int, error) {
-	p, err := strconv.Atoi(s)
-	if err != nil || p < 0 {
-		return 0, fmt.Errorf("invalid precision %q: want a non-negative integer", s)
-	}
-	return p, nil
 }
 
 // formatNumber renders n with at most prec decimal places, trimming

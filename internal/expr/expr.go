@@ -148,13 +148,14 @@ func (p *parser) term() (value, error) {
 		if err != nil {
 			return value{}, err
 		}
+		l, r := left.scalar(), right.scalar()
 		if divide {
-			if right.scalar() == 0 {
+			if r == 0 {
 				return value{}, ErrDivisionByZero
 			}
-			left = value{num: left.scalar() / right.scalar()}
+			left = value{num: l / r}
 		} else {
-			left = value{num: left.scalar() * right.scalar()}
+			left = value{num: l * r}
 		}
 	}
 	return left, nil
