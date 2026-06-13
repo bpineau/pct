@@ -209,6 +209,9 @@ func TestRunHelp(t *testing.T) {
 				"of 20 2000",
 				"base 20 120",
 				"standard input",
+				`"ans"`,            // the previous-result variable
+				"starts a comment", // "#" comments
+				"quit",             // how to leave the interactive session
 				"sqrt",
 				"Examples:",
 				`pct ev "20 + 10%"`,

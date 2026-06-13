@@ -17,6 +17,9 @@ import (
 // is not given.
 const defaultPrecision = 2
 
+// ansName is the variable holding the previous result during a session.
+const ansName = "ans"
+
 // Exit codes returned by Run, following the usual Unix conventions.
 const (
 	exitOK    = 0
@@ -77,7 +80,7 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 // records the failure.
 func session(in io.Reader, out, errw io.Writer, precision int, interactive bool) int {
 	if interactive {
-		fmt.Fprintln(errw, `pct — type an expression; "ans" is the previous result, "quit" leaves`)
+		fmt.Fprintf(errw, "pct — type an expression; %q is the previous result, \"quit\" leaves\n", ansName)
 	}
 	vars := make(map[string]float64)
 	code := exitOK
@@ -105,7 +108,7 @@ func session(in io.Reader, out, errw io.Writer, precision int, interactive bool)
 			}
 			continue
 		}
-		vars["ans"] = result
+		vars[ansName] = result
 		fmt.Fprintln(out, formatNumber(result, precision))
 	}
 	if err := scanner.Err(); err != nil {
@@ -210,9 +213,16 @@ Commands:
 	tw.Flush()
 
 	fmt.Fprintf(w, `
+Standard input:
+
+  With no command, pct evaluates one expression per line read from standard
+  input — in a pipe, or interactively at a terminal. %q is the previous
+  result (at full precision), "#" starts a comment, and "quit", "exit" or
+  Ctrl-D ends an interactive session.
+
 Options:
 
   --precision <digits>  decimal places shown (default %d)
   -h, --help            show this help
-`, defaultPrecision)
+`, ansName, defaultPrecision)
 }
