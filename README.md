@@ -1,5 +1,7 @@
 # pct
 
+[![CI](https://github.com/bpineau/pct/actions/workflows/ci.yml/badge.svg)](https://github.com/bpineau/pct/actions/workflows/ci.yml)
+
 A terminal calculator that speaks percentages.
 
 `pct` answers the percentage questions that come up at a keyboard all day —

@@ -1,0 +1,49 @@
+name: CI
+
+# Run the full quality gate on every push to master (i.e. merges) and on
+# every pull request. GitHub-hosted runners are free with unlimited minutes
+# for public repositories.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+# Least privilege: the workflow only reads the repository.
+permissions:
+  contents: read
+
+# Supersede an in-progress run when new commits land on the same branch or PR.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          # Single source of truth: the version declared in go.mod.
+          go-version-file: go.mod
+          # The module has no dependencies, so there is nothing to cache.
+          cache: false
+
+      - name: Check formatting
+        run: make fmt-check
+
+      - name: Vet
+        run: make vet
+
+      - name: Test
+        run: make test
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          # Match the version used locally so CI and developers agree.
+          version: v2.12.1
