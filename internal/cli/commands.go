@@ -81,7 +81,8 @@ var commands = []command{
 		summary: "the number that, increased by the percentage, gives the result",
 		arity:   2,
 		examples: []example{
-			{`base 20 120`, "100 — undoes add: 100 plus 20% is 120 (e.g. price before tax)"},
+			{`base 20 120`, "100 — what number, plus 20%, gives 120? (e.g. price before tax)"},
+			{`base -55 20`, "44.44 — what number, minus 55%, gives 20? (e.g. price before discount)"},
 		},
 		run: func(args []string) (float64, error) {
 			ns, err := parseNumbers(args, "percentage", "result")

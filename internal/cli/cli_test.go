@@ -208,6 +208,7 @@ func TestRunHelp(t *testing.T) {
 				"Usage:", "add", "eval", "to", "whatof", "compound", "--precision",
 				"of 20 2000",
 				"base 20 120",
+				"base -55 20",
 				"standard input",
 				`"ans"`,            // the previous-result variable
 				"starts a comment", // "#" comments
