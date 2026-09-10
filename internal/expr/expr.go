@@ -10,7 +10,7 @@
 //	             "(" expression ")" .
 //	arguments  = expression { "," expression } .
 //
-// A bare name is a constant — pi and e are predefined — or a caller-supplied
+// A bare name is a constant (pi and e are predefined) or a caller-supplied
 // binding (see EvaluateWith). A name followed by parentheses calls one of
 // the built-in functions: sqrt, abs, round, floor and ceil take one
 // argument; min and max take one or more.
@@ -26,8 +26,8 @@
 //   - Added or subtracted, it is relative to the preceding operand:
 //     "20 + 10%" increases 20 by ten percent and yields 22, while
 //     "80 - 25%" takes a quarter off 80 and yields 60. The preceding
-//     operand is the previous plain term — in "100 + 10 + 50%" the
-//     percentage applies to 10 — or the running result when percentages
+//     operand is the previous plain term (in "100 + 10 + 50%" the
+//     percentage applies to 10) or the running result when percentages
 //     follow one another, so "1000 - 20% - 20%" compounds to 640.
 //
 //   - Multiplied, divided, exponentiated, parenthesized or standing alone,

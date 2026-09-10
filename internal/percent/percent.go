@@ -24,7 +24,7 @@ func Of(p, n float64) float64 {
 	return n * p / 100
 }
 
-// Base returns the number that, increased by p percent, yields n — the
+// Base returns the number that, increased by p percent, yields n, the
 // inverse of Add. It returns ErrTotalLoss if p is -100.
 func Base(p, n float64) (float64, error) {
 	if p == -100 {

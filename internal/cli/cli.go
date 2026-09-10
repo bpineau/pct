@@ -80,7 +80,7 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 // records the failure.
 func session(in io.Reader, out, errw io.Writer, precision int, interactive bool) int {
 	if interactive {
-		fmt.Fprintf(errw, "pct — type an expression; %q is the previous result, \"quit\" leaves\n", ansName)
+		fmt.Fprintf(errw, "pct - type an expression; %q is the previous result, \"quit\" leaves\n", ansName)
 	}
 	vars := make(map[string]float64)
 	code := exitOK
@@ -130,7 +130,7 @@ func isTerminal(r io.Reader) bool {
 
 // splitArgs separates global options from positional arguments. Only exact
 // option names are recognized, so positional arguments that begin with a
-// dash — like the negative percentage in "pct add -2 100" — pass through
+// dash (like the negative percentage in "pct add -2 100") pass through
 // untouched, and options may appear before or after the command.
 func splitArgs(args []string) (options, []string, error) {
 	opts := options{precision: defaultPrecision}
@@ -183,7 +183,7 @@ func formatNumber(n float64, prec int) string {
 // printUsage writes the global help screen, with the command table built
 // from commands so it can never drift out of date.
 func printUsage(w io.Writer) {
-	fmt.Fprint(w, `pct — a terminal calculator that speaks percentages
+	fmt.Fprint(w, `pct - a terminal calculator that speaks percentages
 
 Usage:
 
@@ -216,7 +216,7 @@ Commands:
 Standard input:
 
   With no command, pct evaluates one expression per line read from standard
-  input — in a pipe, or interactively at a terminal. %q is the previous
+  input, in a pipe or interactively at a terminal. %q is the previous
   result (at full precision), "#" starts a comment, and "quit", "exit" or
   Ctrl-D ends an interactive session.
 

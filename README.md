@@ -4,9 +4,9 @@
 
 A terminal calculator that speaks percentages.
 
-`pct` answers the percentage questions that come up at a keyboard all day —
-"what is 20 plus 10%?", "what growth takes 20 to 20.8?", "what does 7% a year
-do to 1000 over 5 years?" — without reaching for a spreadsheet.
+`pct` answers the percentage questions that come up at a keyboard all day
+("what is 20 plus 10%?", "what growth takes 20 to 20.8?", "what does 7% a
+year do to 1000 over 5 years?") without reaching for a spreadsheet.
 
 ```console
 $ pct ev "20 + 10%"
@@ -31,7 +31,7 @@ $ make install
 
 ## Commands
 
-### `eval` (alias `ev`) — evaluate an expression
+### `eval` (alias `ev`): evaluate an expression
 
 Evaluates ordinary infix arithmetic (`+`, `-`, `*`, `/`, `^`, parentheses)
 in which percentages are first-class terms:
@@ -70,7 +70,7 @@ $ pct ev "max(1500, 2000) - 12.5%"
 1750
 ```
 
-### `add` — add a percentage to a number
+### `add`: add a percentage to a number
 
 ```console
 $ pct add 2 100      # 100 increased by 2%
@@ -82,14 +82,14 @@ $ pct add -2 100     # 100 decreased by 2%
 `add x y` is shorthand for `eval "y + x%"`, kept for compatibility with an
 older version of this tool.
 
-### `of` — take a percentage of a number
+### `of`: take a percentage of a number
 
 ```console
 $ pct of 20 2000     # 20% of 2000
 400
 ```
 
-### `base` — the number a percentage was added to
+### `base`: the number a percentage was added to
 
 The inverse of `add`: given a result and the percentage it already
 includes, recover the starting number. This is the price-before-tax
@@ -105,7 +105,7 @@ $ pct add -20 120    # naively subtracting 20% lands elsewhere
 It undoes decreases too: `pct base -20 80` answers "80 is what, after a
 20% discount?" with 100.
 
-### `to` — percentage change between two numbers
+### `to`: percentage change between two numbers
 
 How much percent must be added to the first number to reach the second:
 
@@ -114,14 +114,14 @@ $ pct to 20 20.8     # adding 4% to 20 gives 20.8
 4
 ```
 
-### `whatof` — percentage one number is of another
+### `whatof`: percentage one number is of another
 
 ```console
 $ pct whatof 10 200  # 10 is 5% of 200
 5
 ```
 
-### `compound` (alias `comp`) — compound growth
+### `compound` (alias `comp`): compound growth
 
 Increases a number by a percentage repeatedly:
 
@@ -133,7 +133,7 @@ $ pct comp 7 1000 5  # 1000 growing 7% over 5 periods
 ## Standard input and interactive use
 
 Run without a command, `pct` evaluates expressions from standard input,
-one per line — handy in pipes and scripts:
+one per line, handy in pipes and scripts:
 
 ```console
 $ printf '42 * 270.42 - 20%%\nans / 12\n' | pct
@@ -161,7 +161,7 @@ reuse `ans`, and leave with `quit`, `exit` or Ctrl-D:
 
 ```console
 $ pct
-pct — type an expression; "ans" is the previous result, "quit" leaves
+pct - type an expression; "ans" is the previous result, "quit" leaves
 > 1402.55 - 20%
 1122.04
 > ans * 12
@@ -175,7 +175,7 @@ A percentage literal such as `20%` has no value of its own; it borrows one
 from its context:
 
 - **Added or subtracted, it is relative to the preceding operand.**
-  `20 + 10%` increases 20 by ten percent, giving 22 — not 20.1. The
+  `20 + 10%` increases 20 by ten percent, giving 22, not 20.1. The
   preceding operand is the previous term: in `100 + 10 + 50%`, the
   percentage applies to 10, giving 115. When percentages follow one
   another they compound on the running result: `1000 - 20% - 20%` is 640.

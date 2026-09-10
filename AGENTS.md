@@ -34,10 +34,9 @@ testable in-process; the suite sits at 100 % statement coverage today.
   from `go.mod`.
 - Stdlib only. Adding a dependency is a design decision, not a convenience.
 - English everywhere: code, comments, godoc, README, commit messages.
-- Write plain hyphens only, never an em-dash or en-dash. (The existing
-  user-facing strings - README, help screen, a few doc comments - still carry
-  typographic dashes from the original style; leave them alone unless a sweep
-  is asked for.)
+- Write plain hyphens only, never an em-dash or en-dash. The tree was swept
+  clean of them in 2026-09; a colon, a comma, parentheses or a spaced hyphen
+  says the same thing. Keep it that way: the sweep is only worth doing once.
 - Commit messages follow the existing form: `internal/<pkg>: lowercase
   imperative summary`, or a plain sentence for repo-wide changes.
 

@@ -48,8 +48,8 @@ var commands = []command{
 		summary: "add a percentage to a number",
 		arity:   2,
 		examples: []example{
-			{`add 2 100`, "102 — 100 raised by 2%"},
-			{`add -2 100`, "98 — a negative percentage subtracts"},
+			{`add 2 100`, "102: 100 raised by 2%"},
+			{`add -2 100`, "98: a negative percentage subtracts"},
 		},
 		run: func(args []string) (float64, error) {
 			ns, err := parseNumbers(args, "percentage", "number")
@@ -65,7 +65,7 @@ var commands = []command{
 		summary: "take a percentage of a number",
 		arity:   2,
 		examples: []example{
-			{`of 20 2000`, "400 — 20% of 2000"},
+			{`of 20 2000`, "400: 20% of 2000"},
 		},
 		run: func(args []string) (float64, error) {
 			ns, err := parseNumbers(args, "percentage", "number")
@@ -81,8 +81,8 @@ var commands = []command{
 		summary: "the number that, increased by the percentage, gives the result",
 		arity:   2,
 		examples: []example{
-			{`base 20 120`, "100 — what number, plus 20%, gives 120? (e.g. price before tax)"},
-			{`base -55 20`, "44.44 — what number, minus 55%, gives 20? (e.g. price before discount)"},
+			{`base 20 120`, "100: what number, plus 20%, gives 120? (e.g. price before tax)"},
+			{`base -55 20`, "44.44: what number, minus 55%, gives 20? (e.g. price before discount)"},
 		},
 		run: func(args []string) (float64, error) {
 			ns, err := parseNumbers(args, "percentage", "result")
@@ -99,11 +99,11 @@ var commands = []command{
 		summary: "evaluate an expression with percentage terms",
 		arity:   variadic,
 		examples: []example{
-			{`ev "20 + 10%"`, "22 — a percentage added applies to what precedes it"},
-			{`ev "(10 + 5) * 5%"`, "0.75 — multiplied, a percentage is a plain fraction"},
-			{`ev "1000 - 20% - 20%"`, "640 — consecutive percentages compound"},
-			{`ev "5^3"`, "125 — ^ raises to a power"},
-			{`ev "sqrt(2)"`, "1.41 — also: abs, round, floor, ceil, min, max, pi, e"},
+			{`ev "20 + 10%"`, "22: a percentage added applies to what precedes it"},
+			{`ev "(10 + 5) * 5%"`, "0.75: multiplied, a percentage is a plain fraction"},
+			{`ev "1000 - 20% - 20%"`, "640: consecutive percentages compound"},
+			{`ev "5^3"`, "125: ^ raises to a power"},
+			{`ev "sqrt(2)"`, "1.41: also abs, round, floor, ceil, min, max, pi, e"},
 		},
 		run: func(args []string) (float64, error) {
 			return expr.Evaluate(strings.Join(args, " "))
@@ -115,7 +115,7 @@ var commands = []command{
 		summary: "percentage to add to go from one number to the other",
 		arity:   2,
 		examples: []example{
-			{`to 20 20.8`, "4 — adding 4% takes 20 to 20.8"},
+			{`to 20 20.8`, "4: adding 4% takes 20 to 20.8"},
 		},
 		run: func(args []string) (float64, error) {
 			ns, err := parseNumbers(args, "starting number", "target number")
@@ -131,7 +131,7 @@ var commands = []command{
 		summary: "percentage the first number is of the second",
 		arity:   2,
 		examples: []example{
-			{`whatof 10 200`, "5 — 10 is 5% of 200"},
+			{`whatof 10 200`, "5: 10 is 5% of 200"},
 		},
 		run: func(args []string) (float64, error) {
 			ns, err := parseNumbers(args, "part", "whole")
@@ -148,8 +148,8 @@ var commands = []command{
 		summary: "compound a percentage over a number of periods",
 		arity:   3,
 		examples: []example{
-			{`comp 7 1000 5`, "1402.55 — 7% per period over 5 periods"},
-			{`comp 7 1000 5 --precision 4`, "1402.5517 — more decimal places"},
+			{`comp 7 1000 5`, "1402.55: 7% per period over 5 periods"},
+			{`comp 7 1000 5 --precision 4`, "1402.5517: more decimal places"},
 		},
 		run: func(args []string) (float64, error) {
 			ns, err := parseNumbers(args[:2], "percentage", "number")
