@@ -30,7 +30,7 @@ testable in-process; the suite sits at 100 % statement coverage today.
   **master**. Do not leave finished work uncommitted.
 - `make check` must pass before every commit. CI
   (`.github/workflows/ci.yml`) runs the same gate on pushes to master and on
-  pull requests, with golangci-lint pinned to v2.12.1 and the Go version read
+  pull requests, with golangci-lint pinned to v2.13.2 and the Go version read
   from `go.mod`.
 - Stdlib only. Adding a dependency is a design decision, not a convenience.
 - English everywhere: code, comments, godoc, README, commit messages.
