@@ -4,11 +4,18 @@ Read this first. `README.md` is the complete user manual and every console
 block in it is a literal, current output: if you change behaviour, re-run the
 examples and update it in the same change.
 
-## What pct is, and why it is shaped this way
+## What pct is, and what it is for
 
-`pct` is a single-binary terminal calculator that speaks percentages. Module
-`github.com/bpineau/pct`, Go 1.26, **no dependencies at all** (`go.mod` has no
-require block), under 2000 lines with tests.
+`pct` is a single-binary terminal calculator that speaks percentages: the tool
+you reach for to work out a discount on a discount, a price before VAT, a
+margin, a year-on-year change or a share of a total, without opening a
+spreadsheet. Module `github.com/bpineau/pct`, **no dependencies at all**
+(`go.mod` has no require block).
+
+Who consumes it: a human at a prompt (`pct ev "1000 - 20% - 20%"`, or an
+interactive session), and scripts, which pipe expressions on stdin and read
+results on stdout. Nothing else depends on this repo, and it depends on
+nothing: there is no sibling to keep in step.
 
 The shape follows from one idea: a percentage literal has no value of its own,
 it borrows one from its context. `20 + 10%` is 22, `150 * 10%` is 15. That
@@ -22,23 +29,52 @@ rule needs a real parser, so the code is three flat layers, each usable alone:
 
 `main.go` is wiring only: it calls `cli.Run(args, stdin, stdout, stderr)` and
 exits with what that returns. Every stream is injected, so the whole CLI is
-testable in-process; the suite sits at 100 % statement coverage today.
+testable in-process, and the suite holds full statement coverage: a new branch
+without a test shows up in `make cover`.
 
-## Working rules
+**Deliberately NOT in scope**: arbitrary-precision or decimal arithmetic (this
+is float64 and says so), units and currencies, dates, a configuration file, a
+plugin system, anything that would need a dependency.
 
-- Solo repo (`git@github.com:bpineau/pct.git`), one branch: commit and push to
-  **master**. Do not leave finished work uncommitted.
-- `make check` must pass before every commit. CI
-  (`.github/workflows/ci.yml`) runs the same gate on pushes to master and on
-  pull requests, with golangci-lint pinned to v2.13.2 and the Go version read
-  from `go.mod`.
-- Stdlib only. Adding a dependency is a design decision, not a convenience.
-- English everywhere: code, comments, godoc, README, commit messages.
-- Write plain hyphens only, never an em-dash or en-dash. The tree was swept
-  clean of them in 2026-09; a colon, a comma, parentheses or a spaced hyphen
-  says the same thing. Keep it that way: the sweep is only worth doing once.
-- Commit messages follow the existing form: `internal/<pkg>: lowercase
-  imperative summary`, or a plain sentence for repo-wide changes.
+## Priorities and non-negotiables
+
+1. **The percentage semantics ARE the product.** Everything else is
+   replaceable; those rules are not. Any change to them is a breaking change to
+   the tool's meaning: it needs the package doc of `internal/expr`, the README
+   section and the tests to move together, in one commit.
+2. **Stdlib only, zero dependencies.** `go.mod` has no require block and that
+   is a feature, not an accident. Adding one is a design decision to argue for,
+   never a convenience.
+3. **Output is a contract.** Exit codes (0 success, 1 calculation failure, 2
+   usage error), what goes to stdout versus stderr, and the number formatting
+   are relied on by scripts. Changing any of them is a breaking change.
+4. **Never round inside the math.** Precision is a display concern, handled in
+   one place (`formatNumber`).
+5. **`make check` green before every commit**, and CI green after every push.
+6. **English everywhere**: code, comments, godoc, README, commit messages.
+7. **Plain hyphens only, never an em-dash or en-dash.** The tree was swept
+   clean of them once; a colon, a comma, parentheses or a spaced hyphen says
+   the same thing. Keep it that way, the sweep is only worth doing once.
+8. **Every console block in `README.md` is a literal, current output.** Change
+   behaviour and you re-run the examples and paste the new output in the same
+   commit. The help screen is generated from the `commands` table and cannot
+   drift; the README is not, so it drifts unless you look.
+
+## How to work: the gate, CI, and commits
+
+Commit and push to **master**; one branch, no PR flow, and do not leave
+finished work uncommitted. Commit messages follow the existing form,
+`internal/<pkg>: lowercase imperative summary`, or a plain sentence for a
+repo-wide change.
+
+`make check` (fmt-check + vet + lint + test) is the single completion gate.
+Green looks like `ok` on every package and no other output; it runs in a couple
+of seconds. **There IS push CI** (`.github/workflows/ci.yml`): every push to
+`master` and every pull request runs the same gate on **ubuntu-latest, amd64**,
+with the Go version read from `go.mod` and golangci-lint pinned in the workflow
+to the version used locally. A green gate on an arm64 Mac does not prove the
+Linux amd64 runner green, so push and then **watch the run**
+(`gh run watch`, or `gh run list -L1`) before walking away.
 
 ## Build, test, verify
 
@@ -110,3 +146,20 @@ misspell, revive and unconvert, with errcheck excused only for the
 - Division by zero is caught in `term()` only; `Base` refuses -100 %, `Change`
   and `Share` refuse a zero reference. Everything else is plain float64, so
   `Inf` and `NaN` can reach the output.
+
+## Definition of done
+
+- [ ] `make check` green (fmt, vet, lint, tests).
+- [ ] `make cover` still at full statement coverage: a new branch without a
+      test is visible there and nowhere else.
+- [ ] `make fuzz` run if the scanner or the parser moved (`Evaluate` must never
+      panic on any input; that is all the fuzz target asserts).
+- [ ] The real binary driven, not just the tests: `make build` then the command
+      you changed, including its error path and its exit code.
+- [ ] Percentage semantics touched? `internal/expr`'s package doc, the README
+      section and the tests all moved in the same commit.
+- [ ] `README.md` console blocks re-run and pasted if any output changed, and
+      this file updated if an invariant or the tree moved.
+- [ ] No dependency added; `go.mod` still has no require block.
+- [ ] No typographic dash in the diff.
+- [ ] Committed to `master` and pushed, then **CI watched to green**.
