@@ -111,6 +111,7 @@ misspell, revive and unconvert, with errcheck excused only for the
 | `internal/expr/scan.go` | the scanner: token kinds, byte positions for `SyntaxError`, ASCII-only names |
 | `internal/expr/expr.go` | the grammar (written out in the package doc), the percentage semantics, the built-in functions and constants, `Evaluate` and `EvaluateWith` |
 | `internal/cli/cli.go` | `Run`, `splitArgs`, `session`, `isTerminal`, `formatNumber`, `printUsage` |
+| `internal/cli/terminal*.go` | OS-specific terminal detection (macOS and Linux); other platforms use non-interactive input |
 | `internal/cli/commands.go` | the `commands` table (name, alias, arity, examples, `run`) and the argument parsers. A new subcommand is one entry here |
 
 ## Invariants and traps

@@ -55,6 +55,7 @@ func TestRun(t *testing.T) {
 		{"precision before", []string{"--precision", "4", "comp", "7", "1000", "5"}, "1402.5517\n"},
 		{"precision after", []string{"comp", "7", "1000", "5", "--precision", "4"}, "1402.5517\n"},
 		{"precision with equals", []string{"--precision=0", "comp", "7", "1000", "5"}, "1403\n"},
+		{"maximum precision", []string{"--precision=1000", "ev", "1"}, "1\n"},
 		{"precision zero keeps integers", []string{"--precision=0", "add", "2", "100"}, "102\n"},
 
 		// Negative results survive formatting.
@@ -169,6 +170,7 @@ func TestRunErrors(t *testing.T) {
 		{"eval without expression", []string{"eval"}, 2, "usage: pct eval <expression>"},
 		{"missing precision value", []string{"--precision"}, 2, `option --precision requires a value`},
 		{"bad precision", []string{"--precision", "x", "add", "2", "100"}, 2, `invalid precision "x"`},
+		{"excessive precision", []string{"--precision=1001", "ev", "1"}, 2, "precision must not exceed 1000"},
 		{"negative precision", []string{"--precision=-1", "add", "2", "100"}, 2, `invalid precision "-1"`},
 		{"unknown option", []string{"--frob", "add", "2", "100"}, 2, `unknown option "--frob"`},
 		{"bad number", []string{"add", "two", "100"}, 1, `invalid percentage "two"`},
@@ -244,6 +246,19 @@ func TestSessionReadError(t *testing.T) {
 }
 
 func TestIsTerminal(t *testing.T) {
+	null, err := os.Open(os.DevNull)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := null.Close(); err != nil {
+			t.Error(err)
+		}
+	})
+	if isTerminal(null) {
+		t.Error("null device is not a terminal")
+	}
+
 	if isTerminal(strings.NewReader("")) {
 		t.Error("isTerminal(strings.Reader) = true, want false")
 	}

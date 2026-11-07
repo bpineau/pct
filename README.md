@@ -149,6 +149,9 @@ calculations pipes straight in:
 
 ```console
 $ pct < quote.pct
+1350
+1215
+1458
 $ cat quote.pct
 # day rate, three days
 450 * 3
@@ -156,7 +159,8 @@ ans - 10%        # returning-customer discount
 ans + 20%        # VAT
 ```
 
-On a terminal the same mode is interactive: type an expression per line,
+On a terminal on macOS or Linux the same mode is interactive (other platforms
+use non-interactive input): type an expression per line,
 reuse `ans`, and leave with `quit`, `exit` or Ctrl-D:
 
 ```console
@@ -204,7 +208,7 @@ $ pct eval "(42 * 270.42 - 20%) / 12 - 20% + 150 * 10% + 5 + 8.1%"
 ## Precision
 
 Results print with at most two decimal places, trailing zeros trimmed.
-`--precision` (before or after the command) raises or lowers that limit:
+`--precision` (before or after the command) raises or lowers that limit (0 to 1000 decimal places):
 
 ```console
 $ pct comp 7 1000 5 --precision 4

@@ -119,6 +119,8 @@ func TestEvaluateSyntaxErrors(t *testing.T) {
 		{"frob(1)", `unknown name "frob"`},
 		{"sqrt 4", `expected "(" after "sqrt"`},
 		{"sqrt(4", "unexpected end of expression"},
+		{"sqrt(4,)", "unexpected"},
+		{"min(1, 2,)", "unexpected"},
 		{"sqrt(1, 2)", "sqrt expects 1 argument, got 2"},
 		{"min()", "min expects at least 1 argument"},
 		{"ans + 1", `unknown name "ans"`}, // no binding outside a session

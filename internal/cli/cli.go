@@ -124,8 +124,7 @@ func isTerminal(r io.Reader) bool {
 	if !ok {
 		return false
 	}
-	info, err := f.Stat()
-	return err == nil && info.Mode()&os.ModeCharDevice != 0
+	return terminalFile(f)
 }
 
 // splitArgs separates global options from positional arguments. Only exact
@@ -155,6 +154,9 @@ func splitArgs(args []string) (options, []string, error) {
 			p, err := parseNonNegativeInt("precision", value)
 			if err != nil {
 				return opts, nil, err
+			}
+			if p > 1000 {
+				return opts, nil, fmt.Errorf("precision must not exceed 1000")
 			}
 			opts.precision = p
 		case strings.HasPrefix(arg, "--"):
@@ -222,7 +224,7 @@ Standard input:
 
 Options:
 
-  --precision <digits>  decimal places shown (default %d)
+  --precision <digits>  decimal places shown, 0 to 1000 (default %d)
   -h, --help            show this help
 `, ansName, defaultPrecision)
 }

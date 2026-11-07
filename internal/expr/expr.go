@@ -324,6 +324,9 @@ func (p *parser) name() (value, error) {
 		if err := p.advance(); err != nil {
 			return value{}, err
 		}
+		if p.tok.kind == tokenRightParen {
+			return value{}, p.unexpected()
+		}
 	}
 	if p.tok.kind != tokenRightParen {
 		return value{}, p.unexpected()
