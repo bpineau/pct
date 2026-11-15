@@ -71,7 +71,7 @@ repo-wide change.
 Green looks like `ok` on every package and no other output; it runs in a couple
 of seconds. **There IS push CI** (`.github/workflows/ci.yml`): every push to
 `master` and every pull request runs the same gate on **ubuntu-latest, amd64**,
-with the Go version read from `go.mod` and golangci-lint pinned in the workflow
+with the latest stable Go release and golangci-lint pinned in the workflow
 to the version used locally. A green gate on an arm64 Mac does not prove the
 Linux amd64 runner green, so push and then **watch the run**
 (`gh run watch`, or `gh run list -L1`) before walking away.

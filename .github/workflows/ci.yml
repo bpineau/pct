@@ -28,8 +28,9 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          # Single source of truth: the version declared in go.mod.
-          go-version-file: go.mod
+          # Follow the latest stable Go release; go.mod remains the language floor.
+          go-version: stable
+          check-latest: true
           # The module has no dependencies, so there is nothing to cache.
           cache: false
 
