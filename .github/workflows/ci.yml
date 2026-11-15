@@ -47,4 +47,4 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           # Match the version used locally so CI and developers agree.
-          version: v2.13.2
+          version: v2.15.0
