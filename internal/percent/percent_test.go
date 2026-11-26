@@ -176,3 +176,15 @@ func TestCompound(t *testing.T) {
 		})
 	}
 }
+
+func TestOfRepresentableAtFloatLimits(t *testing.T) {
+	for _, pair := range [][2]float64{{50, 1e308}, {1e308, 50}, {math.SmallestNonzeroFloat64, 100}, {100, math.SmallestNonzeroFloat64}} {
+		want := 5e307
+		if pair[0] == 100 || pair[1] == 100 {
+			want = math.SmallestNonzeroFloat64
+		}
+		if got := Of(pair[0], pair[1]); got != want {
+			t.Errorf("Of(%g, %g) = %g; want %g", pair[0], pair[1], got, want)
+		}
+	}
+}

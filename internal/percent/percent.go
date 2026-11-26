@@ -21,7 +21,12 @@ func Add(p, n float64) float64 {
 
 // Of returns p percent of n.
 func Of(p, n float64) float64 {
-	return n * p / 100
+	product := n * p
+	if math.IsInf(product, 0) && !math.IsInf(n, 0) && !math.IsInf(p, 0) {
+		// The intermediate product can overflow even when the percentage fits.
+		return (n / 100) * p
+	}
+	return product / 100
 }
 
 // Base returns the number that, increased by p percent, yields n, the

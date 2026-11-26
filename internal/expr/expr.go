@@ -40,6 +40,8 @@ import (
 	"fmt"
 	"math"
 	"slices"
+
+	"github.com/bpineau/pct/internal/percent"
 )
 
 // ErrDivisionByZero is returned when an expression divides by zero.
@@ -169,7 +171,7 @@ func (p *parser) expression() (value, error) {
 			return value{}, err
 		}
 		if next.percent {
-			acc += sign * base * next.num / 100
+			acc += sign * percent.Of(next.num, base)
 			base = acc
 		} else {
 			acc += sign * next.num
